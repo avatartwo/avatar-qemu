@@ -570,7 +570,8 @@ void qemu_avatar_sem_open(QemuAvatarSemaphore *sem, const char *name)
 {
 #if defined(__APPLE__) || defined(__NetBSD__)
 #else
-    sem_t *rc = sem_open(name, O_CREAT, O_RDWR, 1);
+    sem_unlink(name);
+    sem_t *rc = sem_open(name, O_CREAT, S_IRUSR | S_IWUSR, 1);
 
     if(rc == SEM_FAILED) {
         error_exit(errno, __func__);
@@ -606,7 +607,7 @@ void qemu_avatar_mq_open_read(QemuAvatarMessageQueue *mq, const char *name)
 {
 #if defined(__APPLE__) || defined(__NetBSD__)
 #else
-    mqd_t m = mq_open(name, O_CREAT | O_RDONLY);
+    mqd_t m = mq_open(name, O_CREAT | O_RDONLY, 0666, NULL);
 
     if(m == -1)
     {
@@ -621,7 +622,7 @@ void qemu_avatar_mq_open_write(QemuAvatarMessageQueue *mq, const char *name)
 {
 #if defined(__APPLE__) || defined(__NetBSD__)
 #else
-    mqd_t m = mq_open(name, O_CREAT | O_WRONLY);
+    mqd_t m = mq_open(name, O_CREAT | O_WRONLY, 0666, NULL);
  
     if(m == -1)
     {
