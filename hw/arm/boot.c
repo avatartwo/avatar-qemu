@@ -1091,7 +1091,7 @@ void arm_load_kernel(ARMCPU *cpu, struct arm_boot_info *info)
         kernel_size = load_image_targphys_as(info->kernel_filename, entry,
                                              info->ram_size - KERNEL_LOAD_ADDR,
                                              as);
-        is_linux = 1;
+//is_linux = 1;
     }
     if (kernel_size < 0) {
         error_report("could not load kernel '%s'", info->kernel_filename);
