@@ -1,0 +1,15 @@
+# -*- Mode: Python -*-
+
+##
+# = avatar additions
+##
+
+##
+# @avatar-arm-irq:
+#
+# Generates an irq for arm-cores
+#
+# avatar-qemu only
+##
+{ 'command': 'avatar-arm-irq', 'data': {'num_cpu': 'int', 'num_irq': 'int' } }
+
