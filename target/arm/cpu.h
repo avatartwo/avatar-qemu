@@ -2435,6 +2435,7 @@ enum arm_features {
      * CPU types added in future.
      */
     ARM_FEATURE_BACKCOMPAT_CNTFRQ, /* 62.5MHz timer default */
+    ARM_FEATURE_CONFIGURABLE, /* created with avatar */
 };
 
 static inline int arm_feature(CPUARMState *env, int feature)
