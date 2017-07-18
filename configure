@@ -7078,7 +7078,7 @@ case "$target_name" in
     TARGET_ARCH=arm
     bflt="yes"
     mttcg="yes"
-    gdb_xml_files="arm-core.xml arm-vfp.xml arm-vfp3.xml arm-neon.xml"
+    gdb_xml_files="arm-core.xml arm-vfp.xml arm-vfp3.xml arm-neon.xml arm-banked.xml"
     target_compiler=$cross_cc_arm
     eval "target_compiler_cflags=\$cross_cc_cflags_${target_name}"
   ;;

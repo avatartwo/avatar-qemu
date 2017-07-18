@@ -6267,7 +6267,12 @@ void cpsr_write(CPUARMState *env, uint32_t val, uint32_t mask,
              * to switch mode. (Those are caught by translate.c for writes
              * triggered by guest instructions.)
              */
-            mask &= ~CPSR_M;
+
+            /* avatar-modification:
+             * while above holds true, we want explicitly be able to switch
+             * mode from CPU_MODE_USR via GDB
+             */
+            if(!arm_feature(env, ARM_FEATURE_CONFIGURABLE)) mask &= ~CPSR_M;
         } else if (bad_mode_switch(env, val & CPSR_M, write_type)) {
             /* Attempt to switch to an invalid mode: this is UNPREDICTABLE in
              * v7, and has defined behaviour in v8:
@@ -8461,7 +8466,6 @@ static void arm_cpu_do_interrupt_aarch32(CPUState *cs)
     if ((env->uncached_cpsr & CPSR_M) == ARM_CPU_MODE_MON) {
         env->cp15.scr_el3 &= ~SCR_NS;
     }
-
     take_aarch32_exception(env, new_mode, mask, offset, addr);
 }
 
