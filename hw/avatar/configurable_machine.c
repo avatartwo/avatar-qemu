@@ -436,6 +436,33 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
     set_feature(&cpuu->env, ARM_FEATURE_CONFIGURABLE);
     return cpuu;
 }
+
+
+static void create_nvic(ARMCPU *cpu){
+    CPUARMState *s = (CPUARMState *) &(cpu->env);
+    SysBusDevice *sbd;
+    Error *err = NULL;
+
+
+    //if (!strcmp(cpu_model, "cortex-m3")){
+    if (1) {
+        //cortex-m3, let's create an NVIC *hack*
+        object_initialize(&s->nvic, sizeof(s->nvic), "armv7m_nvic");
+        qdev_set_parent_bus(DEVICE(&s->nvic), sysbus_get_default());
+        sbd = SYS_BUS_DEVICE(&s->nvic);
+        //sysbus_connect_irq(sbd, 0, 
+        memory_region_add_subregion( get_system_memory(), 0xe000e000, 
+                sysbus_mmio_get_region(sbd, 0));
+    }
+    object_property_set_bool(OBJECT(&s->nvic), true, "realized", &err);
+
+}
+
+
+
+
+
+
 #elif TARGET_MIPS
 static MIPSCPU *create_cpu(MachineState * ms, QDict *conf)
 {
@@ -491,8 +518,11 @@ static void board_init(MachineState * ms)
         conf = qdict_new();
     }
 
-    cpuu = create_cpu(ms, conf);
-    set_entry_point(conf, cpuu);
+    //cpuu = create_cpu(ms, conf);
+    //create_nvic(cpuu);
+    //
+    armv7m_init(get_system_memory, 0x20000000, 64, kernel_filename, "cortex-m3");
+    //set_entry_point(conf, cpuu);
 
     if (qdict_haskey(conf, "memory_mapping"))
     {

@@ -21,8 +21,10 @@ void qmp_avatar_arm_irq(int64_t num_cpu, int64_t num_irq, Error **errp)
     //cpu_interrupt(cpu, num_irq);
     ARMCPU *armcpu = ARM_CPU(qemu_get_cpu(num_cpu));
     //armcpu->pending |= 1<< irq
-    //CPUARMState *env = &armcpu->env;
-    armv7m_nvic_set_pending(armcpu, num_irq);
+    CPUARMState *env = &armcpu->env;
+    printf("got cpu");
+    armv7m_nvic_set_pending(env->nvic, num_irq);
+    printf("survived set pending");
 #endif
 
 }
