@@ -18,6 +18,7 @@
 #include "sysemu/kvm.h"
 #include "fpu/softfloat.h"
 #include "qemu/range.h"
+#include "hw/avatar/interrupts.h"
 
 #define ARM_CPU_FREQ 1000000000 /* FIXME: 1 GHz, should be configurable */
 
@@ -7373,6 +7374,8 @@ static void do_v7m_exception_exit(ARMCPU *cpu)
         v7m_exception_taken(cpu, excret, true, false);
         return;
     }
+
+    avatar_armv7m_exception_exit(env->v7m.exception, type);
 
     if (ufault) {
         /* Bad exception return: instead of popping the exception

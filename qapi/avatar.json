@@ -5,11 +5,32 @@
 ##
 
 ##
-# @avatar-arm-irq:
+# @avatar-armv7m-enable-irq:
 #
-# Generates an irq for arm-cores
+# Enables custom avatar interrupt handling for armv7m guests
 #
 # avatar-qemu only
 ##
-{ 'command': 'avatar-arm-irq', 'data': {'num_cpu': 'int', 'num_irq': 'int' } }
+{ 'command': 'avatar-armv7m-enable-irq',
+  'data': { 'rx_queue_name': 'str', 'tx_queue_name': 'str' }
+}
 
+##
+# @avatar-armv7m-disable-irq:
+#
+# Disables custom avatar interrupt handling for armv7m guests
+#
+# avatar-qemu only
+##
+{ 'command': 'avatar-armv7m-disable-irq' }
+
+##
+# @avatar-armv7m-inject-irq:
+#
+# Inject interrupt to armv7m core (requires arv7m interrupt handling enabled)
+#
+# avatar-qemu only
+##
+{ 'command': 'avatar-armv7m-inject-irq',
+  'data': {'num_cpu': 'int', 'num_irq': 'int' }
+}
