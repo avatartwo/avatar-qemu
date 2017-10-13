@@ -40,13 +40,15 @@ void qmp_avatar_armv7m_enable_irq(const char *rx_queue_name,
     }
 
     armv7m_exception_handling_enabled = true;
-    qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection enabled");
+    qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection enabled\n");
+    qemu_log_flush();
 }
 
 void qmp_avatar_armv7m_disable_irq(Error **errp)
 {
-    qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection disabled");
+    qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection disabled\n");
     armv7m_exception_handling_enabled = false;
+    qemu_log_flush();
 }
 
 void qmp_avatar_armv7m_inject_irq(int64_t num_cpu,
@@ -55,6 +57,7 @@ void qmp_avatar_armv7m_inject_irq(int64_t num_cpu,
 #ifdef TARGET_ARM
     if(!armv7m_exception_handling_enabled){
         qemu_log_mask(LOG_AVATAR, "invalid armv7m interrupt injection attempt");
+        qemu_log_flush();
     }
     ARMCPU *armcpu = ARM_CPU(qemu_get_cpu(num_cpu));
     CPUARMState *env = &armcpu->env;
