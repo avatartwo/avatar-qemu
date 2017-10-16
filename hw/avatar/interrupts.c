@@ -22,8 +22,8 @@
 static QemuAvatarMessageQueue *irq_rx_queue_ref = NULL;
 static QemuAvatarMessageQueue *irq_tx_queue_ref = NULL;
 
-static QemuAvatarMessageQueue *rmem_rx_queue_ref = NULL;
-static QemuAvatarMessageQueue *rmem_tx_queue_ref = NULL;
+extern  QemuAvatarMessageQueue *rmem_rx_queue_ref;
+extern  QemuAvatarMessageQueue *rmem_tx_queue_ref;
 
 static uint64_t req_id;
 
