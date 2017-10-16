@@ -12,7 +12,10 @@
 # avatar-qemu only
 ##
 { 'command': 'avatar-armv7m-enable-irq',
-  'data': { 'rx_queue_name': 'str', 'tx_queue_name': 'str' }
+  'data': {
+      'irq_rx_queue_name': 'str', 'irq_tx_queue_name': 'str',
+      'rmem_rx_queue_name': 'str', 'rmem_tx_queue_name': 'str'
+  }
 }
 
 ##

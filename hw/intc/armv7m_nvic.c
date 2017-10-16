@@ -22,6 +22,7 @@
 #include "exec/exec-all.h"
 #include "qemu/log.h"
 #include "trace.h"
+#include "hw/avatar/interrupts.h"
 
 /* IRQ number counting:
  *
@@ -1233,6 +1234,8 @@ static void nvic_writel(NVICState *s, uint32_t offset, uint32_t value,
                         MemTxAttrs attrs)
 {
     ARMCPU *cpu = s->cpu;
+
+    avatar_armv7m_nvic_forward_write(offset, value);
 
     switch (offset) {
     case 0xc: /* CPPWR */

@@ -16,27 +16,66 @@
 #endif
 
 #include "hw/avatar/interrupts.h"
+#include "hw/avatar/remote_memory.h"
 
 
-static QemuAvatarMessageQueue *rx_queue_ref = NULL;
-static QemuAvatarMessageQueue *tx_queue_ref = NULL;
+static QemuAvatarMessageQueue *irq_rx_queue_ref = NULL;
+static QemuAvatarMessageQueue *irq_tx_queue_ref = NULL;
+
+static QemuAvatarMessageQueue *rmem_rx_queue_ref = NULL;
+static QemuAvatarMessageQueue *rmem_tx_queue_ref = NULL;
+
 static uint64_t req_id;
 
 static bool armv7m_exception_handling_enabled = false;
 
+void avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value){
+    int ret;
+    RemoteMemoryResp resp;
 
-void qmp_avatar_armv7m_enable_irq(const char *rx_queue_name,
-                                  const char *tx_queue_name, Error **errp)
+    if(!armv7m_exception_handling_enabled){
+        return;
+    }
+
+    memset(&resp, 0, sizeof(resp));
+
+    uint64_t pc = get_current_pc();
+    
+    //for now, assusme nvic at the standard location at 0xE000E000
+    MemoryForwardReq request = {req_id++, pc, 0xe000e000+offset, value, 4, AVATAR_WRITE};
+
+    qemu_avatar_mq_send(rmem_tx_queue_ref, &request, sizeof(request));
+    ret = qemu_avatar_mq_receive(rmem_rx_queue_ref, &resp, sizeof(resp));
+    if(!resp.success || (resp.id != request.id)){
+
+        error_report("RemoteMemoryWrite for NVIC failed (%d)!\n", ret);
+        exit(1);
+    }
+}
+
+void qmp_avatar_armv7m_enable_irq(const char *irq_rx_queue_name,
+                                  const char *irq_tx_queue_name, 
+                                  const char *rmem_rx_queue_name,
+                                  const char *rmem_tx_queue_name, Error **errp)
 {
-    if(rx_queue_ref == NULL){
-        rx_queue_ref = malloc(sizeof(QemuAvatarMessageQueue));
-        qemu_avatar_mq_open_read(rx_queue_ref, rx_queue_name,
+    if(irq_rx_queue_ref == NULL){
+        irq_rx_queue_ref = malloc(sizeof(QemuAvatarMessageQueue));
+        qemu_avatar_mq_open_read(irq_rx_queue_ref, irq_rx_queue_name,
                 sizeof(V7MInterruptResp));
     }
-    if(tx_queue_ref == NULL){
-        tx_queue_ref = malloc(sizeof(QemuAvatarMessageQueue));
-        qemu_avatar_mq_open_write(tx_queue_ref, tx_queue_name,
+    if(irq_tx_queue_ref == NULL){
+        irq_tx_queue_ref = malloc(sizeof(QemuAvatarMessageQueue));
+        qemu_avatar_mq_open_write(irq_tx_queue_ref, irq_tx_queue_name,
                 sizeof(V7MInterruptReq));
+    }
+
+    if(rmem_rx_queue_ref == NULL){
+        rmem_rx_queue_ref = malloc(sizeof(QemuAvatarMessageQueue));
+        qemu_avatar_mq_open_read(rmem_rx_queue_ref, rmem_rx_queue_name, sizeof(RemoteMemoryResp));
+    }
+    if(rmem_tx_queue_ref == NULL){
+        rmem_tx_queue_ref = malloc(sizeof(QemuAvatarMessageQueue));
+        qemu_avatar_mq_open_write(rmem_tx_queue_ref, rmem_tx_queue_name, sizeof(MemoryForwardReq));
     }
 
     armv7m_exception_handling_enabled = true;
@@ -74,8 +113,8 @@ void avatar_armv7m_exception_exit(int irq, uint32_t type)
 
     memset(&resp, 0, sizeof(resp));
 
-    qemu_avatar_mq_send(tx_queue_ref, &request, sizeof(request));
-    ret = qemu_avatar_mq_receive(rx_queue_ref, &resp, sizeof(resp));
+    qemu_avatar_mq_send(irq_tx_queue_ref, &request, sizeof(request));
+    ret = qemu_avatar_mq_receive(irq_rx_queue_ref, &resp, sizeof(resp));
 
     if(!resp.success || (resp.id != request.id)){
         error_report("ARMv7mInterruptRequest failed (%d)!\n", ret);
