@@ -1235,7 +1235,6 @@ static void nvic_writel(NVICState *s, uint32_t offset, uint32_t value,
 {
     ARMCPU *cpu = s->cpu;
 
-    avatar_armv7m_nvic_forward_write(offset, value);
 
     switch (offset) {
     case 0xc: /* CPPWR */
@@ -1906,6 +1905,7 @@ static MemTxResult nvic_sysreg_write(void *opaque, hwaddr addr,
     unsigned i, startvec, end;
     unsigned setval = 0;
 
+    avatar_armv7m_nvic_forward_write(offset, value, size);
     trace_nvic_sysreg_write(addr, value, size);
 
     if (attrs.user && !nvic_user_access_ok(s, addr, attrs)) {

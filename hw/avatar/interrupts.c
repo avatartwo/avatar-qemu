@@ -29,10 +29,12 @@ static uint64_t req_id;
 
 static bool armv7m_exception_handling_enabled = false;
 
-void avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value){
+void avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value, unsigned size){
     int ret;
     RemoteMemoryResp resp;
 
+    qemu_log_mask(LOG_AVATAR, "armv7m nvic write at offset 0x%x\n", offset);
+    qemu_log_flush();
     if(!armv7m_exception_handling_enabled){
         return;
     }
@@ -42,7 +44,7 @@ void avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value){
     uint64_t pc = get_current_pc();
     
     //for now, assusme nvic at the standard location at 0xE000E000
-    MemoryForwardReq request = {req_id++, pc, 0xe000e000+offset, value, 4, AVATAR_WRITE};
+    MemoryForwardReq request = {req_id++, pc, 0xe000e000+offset, value, size, AVATAR_WRITE};
 
     qemu_avatar_mq_send(rmem_tx_queue_ref, &request, sizeof(request));
     ret = qemu_avatar_mq_receive(rmem_rx_queue_ref, &resp, sizeof(resp));

@@ -13,6 +13,6 @@ typedef struct V7MInterruptResp{
 } V7MInterruptResp;
 
 void avatar_armv7m_exception_exit(int irq, uint32_t type);
-void avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value);
+void avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value,unsigned size);
 
 #endif
