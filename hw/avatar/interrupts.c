@@ -100,6 +100,7 @@ void qmp_avatar_armv7m_inject_irq(int64_t num_cpu,
         qemu_log_mask(LOG_AVATAR, "invalid armv7m interrupt injection attempt");
         qemu_log_flush();
     }
+    qemu_log_mask(LOG_AVATAR, "Injecting exception 0x%x\n", num_irq);
     ARMCPU *armcpu = ARM_CPU(qemu_get_cpu(num_cpu));
     CPUARMState *env = &armcpu->env;
     armv7m_nvic_set_pending(env->nvic, num_irq);
@@ -113,6 +114,7 @@ void avatar_armv7m_exception_exit(int irq, uint32_t type)
     V7MInterruptResp resp;
     V7MInterruptReq request = {req_id++, irq, type};
 
+    qemu_log_mask(LOG_AVATAR, "Returning form 0x%x\n", irq);
     memset(&resp, 0, sizeof(resp));
 
     qemu_avatar_mq_send(irq_tx_queue_ref, &request, sizeof(request));
