@@ -16,6 +16,7 @@
 #endif
 
 #include "hw/avatar/interrupts.h"
+#include "hw/avatar/avatar_posix.h"
 #include "hw/avatar/remote_memory.h"
 
 
