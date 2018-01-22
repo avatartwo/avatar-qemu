@@ -37,3 +37,26 @@
 { 'command': 'avatar-armv7m-inject-irq',
   'data': {'num_cpu': 'int', 'num_irq': 'int' }
 }
+
+##
+# @avatar-armv7m-ignore-irq-return:
+#
+# Advices QEMU to not communicate with avatar on interrupt returns
+#
+# avatar-qemu only
+##
+{ 'command': 'avatar-armv7m-ignore-irq-return',
+  'data': {'num_irq': 'int' }
+}
+
+
+##
+# @avatar-armv7m-unignore-irq-return:
+#
+# Advices QEMU to communicate with avatar on interrupt returns
+#
+# avatar-qemu only
+##
+{ 'command': 'avatar-armv7m-unignore-irq-return',
+  'data': {'num_irq': 'int' }
+}
