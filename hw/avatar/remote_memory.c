@@ -69,6 +69,7 @@ static void avatar_rmemory_write(void *opaque, hwaddr offset,
     uint64_t pc = get_current_pc();
     
     MemoryForwardReq request = {s->request_id++, pc, s->address+offset, value, size, AVATAR_WRITE};
+    printf("new req with id%d\n", request.id);
 
     qemu_avatar_mq_send(s->tx_queue, &request, sizeof(request));
     ret = qemu_avatar_mq_receive(s->rx_queue, &resp, sizeof(resp));

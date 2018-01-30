@@ -108,7 +108,7 @@ void qmp_avatar_armv7m_unignore_irq_return(int64_t num_irq, Error **errp)
 void qmp_avatar_armv7m_inject_irq(int64_t num_cpu,int64_t num_irq, Error **errp)
 {
 #ifdef TARGET_ARM
-    qemu_log_mask(LOG_AVATAR, "Injecting exception 0x%x\n", num_irq);
+    qemu_log_mask(LOG_AVATAR, "Injecting exception 0x%lx\n", num_irq);
     ARMCPU *armcpu = ARM_CPU(qemu_get_cpu(num_cpu));
     CPUARMState *env = &armcpu->env;
     armv7m_nvic_set_pending(env->nvic, num_irq);
@@ -120,7 +120,7 @@ void avatar_armv7m_exception_exit(int irq, uint32_t type)
 {
     int ret;
     V7MInterruptResp resp;
-    V7MInterruptReq request = {req_id++, irq, type};
+    V7MInterruptReq request = {req_id++, irq, INTERRUPT_EXIT, type};
 
     if( (ignore_irq_return_map[irq/8] & 1 << irq % 8) || !armv7m_exception_handling_enabled)
     {
@@ -133,7 +133,31 @@ void avatar_armv7m_exception_exit(int irq, uint32_t type)
         qemu_avatar_mq_send(irq_tx_queue_ref, &request, sizeof(request));
         ret = qemu_avatar_mq_receive(irq_rx_queue_ref, &resp, sizeof(resp));
 
-        if(!resp.success || (resp.id != request.id)){
+        if(!resp.success || (resp.id != request.id) || (resp.operation != INTERRUPT_EXIT) ){
+            error_report("ARMv7mInterruptRequest failed (%d)!\n", ret);
+            exit(1);
+        }
+    }
+}
+
+void avatar_armv7m_exception_enter(int irq)
+{
+    int ret;
+    V7MInterruptResp resp;
+    V7MInterruptReq request = {req_id++, irq, INTERRUPT_ENTER, 0};
+
+    if( (ignore_irq_return_map[irq/8] & 1 << irq % 8) || !armv7m_exception_handling_enabled)
+    {
+        qemu_log_mask(LOG_AVATAR, "Entered IRQ 0x%x - Ignored by avatar\n", irq);
+    }
+    else{
+        qemu_log_mask(LOG_AVATAR, "Entering IRQ 0x%x\n", irq);
+        memset(&resp, 0, sizeof(resp));
+
+        qemu_avatar_mq_send(irq_tx_queue_ref, &request, sizeof(request));
+        ret = qemu_avatar_mq_receive(irq_rx_queue_ref, &resp, sizeof(resp));
+
+        if(!resp.success || (resp.id != request.id) || (resp.operation != INTERRUPT_ENTER)){
             error_report("ARMv7mInterruptRequest failed (%d)!\n", ret);
             exit(1);
         }

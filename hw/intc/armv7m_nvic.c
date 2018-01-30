@@ -679,6 +679,7 @@ void armv7m_nvic_acknowledge_irq(void *opaque)
     assert(s->vectpending_prio < running);
 
     trace_nvic_acknowledge_irq(pending, s->vectpending_prio);
+    avatar_armv7m_exception_enter(s->num_irq);
 
     vec->active = 1;
     vec->pending = 0;
