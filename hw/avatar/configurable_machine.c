@@ -404,6 +404,8 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
     Object *cpuobj;
     ARMCPU *cpuu;
     CPUState *env;
+    DeviceState *dstate; //generic device if CPU can be initiliazed via qdev-API
+    int num_irq = 64;
 
     if (qdict_haskey(conf, "cpu_model"))
     {
@@ -415,51 +417,50 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
 
     printf("Configurable: Adding processor %s\n", cpu_model);
 
-    cpu_oc = cpu_class_by_name(TYPE_ARM_CPU, cpu_model);
-    if (!cpu_oc) {
-        fprintf(stderr, "Unable to find CPU definition\n");
-        exit(1);
-    }
+    //create armv7m cpus together with nvic
+        if (!strcmp(cpu_model, "cortex-m3"))
+        {
 
-    cpuobj = object_new(object_class_get_name(cpu_oc));
+            if (qdict_haskey(conf, "num_irq"))
+            {
+                num_irq = qdict_get_int(conf, "num_irq");
+                g_assert(num_irq);
+            } 
 
-    object_property_set_bool(cpuobj, true, "realized", &error_fatal);
-    cpuu = ARM_CPU(cpuobj);
-    env = (CPUState *) &(cpuu->env);
-    if (!env)
-    {
-        fprintf(stderr, "Unable to find CPU definition\n");
-        exit(1);
-    }
+            dstate = qdev_create(NULL, "armv7m");
+            qdev_prop_set_uint32(dstate, "num-irq", num_irq);
+            qdev_prop_set_string(dstate, "cpu-model", cpu_model);
+            object_property_set_link(OBJECT(dstate), OBJECT(get_system_memory()),
+                    "memory", &error_abort);
+            qdev_init_nofail(dstate);
+
+            cpuu = ARM_CPU(first_cpu);
+
+        }
+        else
+        {
+        cpu_oc = cpu_class_by_name(TYPE_ARM_CPU, cpu_model);
+        if (!cpu_oc) {
+            fprintf(stderr, "Unable to find CPU definition\n");
+            exit(1);
+        }
+
+        cpuobj = object_new(object_class_get_name(cpu_oc));
+
+        object_property_set_bool(cpuobj, true, "realized", &error_fatal);
+        cpuu = ARM_CPU(cpuobj);
+        env = (CPUState *) &(cpuu->env);
+        if (!env)
+        {
+            fprintf(stderr, "Unable to find CPU definition\n");
+            exit(1);
+        }
+        }
 
     avatar_add_banked_registers(cpuu);
     set_feature(&cpuu->env, ARM_FEATURE_CONFIGURABLE);
     return cpuu;
 }
-
-
-static void create_nvic(ARMCPU *cpu){
-    CPUARMState *s = (CPUARMState *) &(cpu->env);
-    SysBusDevice *sbd;
-    Error *err = NULL;
-
-
-    //if (!strcmp(cpu_model, "cortex-m3")){
-    if (1) {
-        //cortex-m3, let's create an NVIC *hack*
-        object_initialize(&s->nvic, sizeof(s->nvic), "armv7m_nvic");
-        qdev_set_parent_bus(DEVICE(&s->nvic), sysbus_get_default());
-        sbd = SYS_BUS_DEVICE(&s->nvic);
-        //sysbus_connect_irq(sbd, 0, 
-        memory_region_add_subregion( get_system_memory(), 0xe000e000, 
-                sysbus_mmio_get_region(sbd, 0));
-    }
-    object_property_set_bool(OBJECT(&s->nvic), true, "realized", &err);
-
-}
-
-
-
 
 
 
@@ -518,11 +519,8 @@ static void board_init(MachineState * ms)
         conf = qdict_new();
     }
 
-    //cpuu = create_cpu(ms, conf);
-    //create_nvic(cpuu);
-    //
-    armv7m_init(get_system_memory, 0x20000000, 64, kernel_filename, "cortex-m3");
-    //set_entry_point(conf, cpuu);
+    cpuu = create_cpu(ms, conf);
+    set_entry_point(conf, cpuu);
 
     if (qdict_haskey(conf, "memory_mapping"))
     {
