@@ -32,7 +32,7 @@ static bool armv7m_exception_handling_enabled = false;
 static uint8_t ignore_irq_return_map[32] = {0};
 
 
-void qmp_avatar_armv7m_set_nvic_base(int64_t num_cpu, int64_t base, Error **errp)
+void qmp_avatar_armv7m_set_vector_table_base(int64_t num_cpu, int64_t base, Error **errp)
 {
 #ifdef TARGET_ARM
     qemu_log_mask(LOG_AVATAR, "Changing NVIC base to%lx\n", base & 0xffffff80);

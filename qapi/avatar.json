@@ -61,14 +61,15 @@
   'data': {'num_irq': 'int' }
 }
 
-
 ##
-# @avatar-armv7m-set-nvic-base:
+# @avatar-armv7m-set-vector-table-base:
 #
 # Sets the NVIC base address to a user controlled location
 #
 # avatar-qemu only
 ##
-{ 'command': 'avatar-armv7m-set-nvic-base',
+{ 'command': 'avatar-armv7m-set-vector-table-base',
   'data': {'num_cpu': 'int', 'base': 'int' }
 }
+
+
