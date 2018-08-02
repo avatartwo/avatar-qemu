@@ -31,6 +31,17 @@ static uint64_t req_id;
 static bool armv7m_exception_handling_enabled = false;
 static uint8_t ignore_irq_return_map[32] = {0};
 
+
+void qmp_avatar_armv7m_set_nvic_base(int64_t num_cpu, int64_t base, Error **errp)
+{
+#ifdef TARGET_ARM
+    qemu_log_mask(LOG_AVATAR, "Changing NVIC base to%lx\n", base & 0xffffff80);
+    ARMCPU *armcpu = ARM_CPU(qemu_get_cpu(num_cpu));
+    armcpu->env.v7m.vecbase = base & 0xffffff80;
+#endif
+}
+
+
 void avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value, unsigned size){
     int ret;
     RemoteMemoryResp resp;
@@ -86,6 +97,7 @@ void qmp_avatar_armv7m_enable_irq(const char *irq_rx_queue_name,
     qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection enabled\n");
     qemu_log_flush();
 }
+
 
 void qmp_avatar_armv7m_disable_irq(Error **errp)
 {

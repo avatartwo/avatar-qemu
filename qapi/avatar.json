@@ -60,3 +60,15 @@
 { 'command': 'avatar-armv7m-unignore-irq-return',
   'data': {'num_irq': 'int' }
 }
+
+
+##
+# @avatar-armv7m-set-nvic-base:
+#
+# Sets the NVIC base address to a user controlled location
+#
+# avatar-qemu only
+##
+{ 'command': 'avatar-armv7m-set-nvic-base',
+  'data': {'num_cpu': 'int', 'base': 'int' }
+}
