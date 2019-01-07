@@ -7375,7 +7375,7 @@ static void do_v7m_exception_exit(ARMCPU *cpu)
         return;
     }
 
-    avatar_armv7m_exception_exit(env->v7m.exception, type);
+    avatar_armv7m_exception_exit(env->v7m.exception, env->regs[15]);
 
     if (ufault) {
         /* Bad exception return: instead of popping the exception

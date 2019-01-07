@@ -3,7 +3,7 @@
 #include "qemu/log.h"
 #include "qemu/error-report.h"
 #include "qemu-common.h"
-#include "qmp-commands.h"
+#include "qapi/qapi-commands-avatar.h"
 #include "qapi/error.h"
 
 #include "hw/sysbus.h"
@@ -37,7 +37,8 @@ void qmp_avatar_armv7m_set_vector_table_base(int64_t num_cpu, int64_t base, Erro
 #ifdef TARGET_ARM
     qemu_log_mask(LOG_AVATAR, "Changing NVIC base to%lx\n", base & 0xffffff80);
     ARMCPU *armcpu = ARM_CPU(qemu_get_cpu(num_cpu));
-    armcpu->env.v7m.vecbase = base & 0xffffff80;
+    /* MM: qemu now has multiple vecbases, we may need to fix this */
+    armcpu->env.v7m.vecbase[armcpu->env.v7m.secure] = base & 0xffffff80;
 #endif
 }
 
@@ -123,7 +124,8 @@ void qmp_avatar_armv7m_inject_irq(int64_t num_cpu,int64_t num_irq, Error **errp)
     qemu_log_mask(LOG_AVATAR, "Injecting exception 0x%lx\n", num_irq);
     ARMCPU *armcpu = ARM_CPU(qemu_get_cpu(num_cpu));
     CPUARMState *env = &armcpu->env;
-    armv7m_nvic_set_pending(env->nvic, num_irq);
+    /*  MM: for now, we can only inject non-secure irqs */
+    armv7m_nvic_set_pending(env->nvic, num_irq, false);
 #endif
 }
 

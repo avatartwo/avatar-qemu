@@ -46,8 +46,9 @@
 #include "qapi/error.h"
 #include "qapi/qmp/qjson.h"
 #include "qapi/qmp/qobject.h"
-#include "qapi/qmp/qint.h"
+#include "qapi/qmp/qnum.h"
 #include "qapi/qmp/qdict.h"
+#include "qapi/qmp/qlist.h"
 
 
 
@@ -77,6 +78,7 @@ static QDict * load_configuration(const char * filename)
     ssize_t err;
     Error * qerr = NULL;
     QObject * obj;
+    QDict * obj_dict;
 
     lseek(file, 0, SEEK_SET);
 
@@ -107,9 +109,16 @@ static QDict * load_configuration(const char * filename)
         exit(1);
     }
 
+    obj_dict = qobject_to(QDict, obj);
+    if (!obj_dict) {
+        qobject_unref(obj);
+        fprintf(stderr, "Invalid JSON object given");
+        exit(1);
+    }
+
     g_free(filedata);
 
-    return qobject_to_qdict(obj);
+    return obj_dict;
 }
 
 static QDict *peripherals;
@@ -125,7 +134,7 @@ static void set_properties(DeviceState *dev, QList *properties)
 
         g_assert(qobject_type(entry->value) == QTYPE_QDICT);
 
-        property = qobject_to_qdict(entry->value);
+        property = qobject_to(QDict, entry->value);
         QDICT_ASSERT_KEY_TYPE(property, "type", QTYPE_QSTRING);
         QDICT_ASSERT_KEY_TYPE(property, "name", QTYPE_QSTRING);
 
@@ -134,9 +143,9 @@ static void set_properties(DeviceState *dev, QList *properties)
 
         if(!strcmp(type, "serial"))
         {
-            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QINT);
+            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QNUM);
             const int value = qdict_get_int(property, "value");
-            qdev_prop_set_chr(dev, name, serial_hds[value]);
+            qdev_prop_set_chr(dev, name, serial_hd(value));
         }
         else if(!strcmp(type, "string"))
         {
@@ -146,25 +155,25 @@ static void set_properties(DeviceState *dev, QList *properties)
         }
         else if(!strcmp(type, "int32"))
         {
-            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QINT);
+            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QNUM);
             const int value = qdict_get_int(property, "value");
             qdev_prop_set_int32(dev, name, value);
         }
         else if(!strcmp(type, "uint32"))
         {
-            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QINT);
+            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QNUM);
             const int value = qdict_get_int(property, "value");
             qdev_prop_set_uint32(dev, name, value);
         }
         else if(!strcmp(type, "int64"))
         {
-            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QINT);
+            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QNUM);
             const int64_t value = qdict_get_int(property, "value");
             qdev_prop_set_uint64(dev, name, value);
         }
         else if(!strcmp(type, "uint64"))
         {
-            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QINT);
+            QDICT_ASSERT_KEY_TYPE(property, "value", QTYPE_QNUM);
             const uint64_t value = qdict_get_int(property, "value");
             qdev_prop_set_uint64(dev, name, value);
         }
@@ -249,7 +258,7 @@ static void init_memory_area(QDict *mapping, const char *kernel_filename)
     MemoryRegion *sysmem = get_system_memory();
 
     QDICT_ASSERT_KEY_TYPE(mapping, "name", QTYPE_QSTRING);
-    QDICT_ASSERT_KEY_TYPE(mapping, "size", QTYPE_QINT);
+    QDICT_ASSERT_KEY_TYPE(mapping, "size", QTYPE_QNUM);
     g_assert((qdict_get_int(mapping, "size") & ((1 << 12) - 1)) == 0);
 
     if(qdict_haskey(mapping, "is_rom")) {
@@ -270,9 +279,8 @@ static void init_memory_area(QDict *mapping, const char *kernel_filename)
     } else {
         memory_region_init_rom(ram, NULL, name, size, &error_fatal);
     }
-    vmstate_register_ram(ram, NULL);
 
-    QDICT_ASSERT_KEY_TYPE(mapping, "address", QTYPE_QINT);
+    QDICT_ASSERT_KEY_TYPE(mapping, "address", QTYPE_QNUM);
     address = qdict_get_int(mapping, "address");
 
     printf("Configurable: Adding memory region %s (size: 0x%"
@@ -338,7 +346,7 @@ static void init_peripheral(QDict *device)
     const char * name;
     uint64_t address;
 
-    QDICT_ASSERT_KEY_TYPE(device, "address", QTYPE_QINT);
+    QDICT_ASSERT_KEY_TYPE(device, "address", QTYPE_QNUM);
     QDICT_ASSERT_KEY_TYPE(device, "qemu_name", QTYPE_QSTRING);
     QDICT_ASSERT_KEY_TYPE(device, "bus", QTYPE_QSTRING);
     QDICT_ASSERT_KEY_TYPE(device, "name", QTYPE_QSTRING);
@@ -358,7 +366,7 @@ static void init_peripheral(QDict *device)
         if(qdict_haskey(device, "properties") &&
            qobject_type(qdict_get(device, "properties")) == QTYPE_QLIST)
         {
-            properties = qobject_to_qlist(qdict_get(device, "properties"));
+            properties = qobject_to(QList, qdict_get(device, "properties"));
         }
 
         sb = make_configurable_device(qemu_name, address, properties);
@@ -385,7 +393,7 @@ static void set_entry_point(QDict *conf, MIPSCPU *cpuu)
     if(!qdict_haskey(conf, entry_field))
         return;
 
-    QDICT_ASSERT_KEY_TYPE(conf, entry_field, QTYPE_QINT);
+    QDICT_ASSERT_KEY_TYPE(conf, entry_field, QTYPE_QNUM);
     entry = qdict_get_int(conf, entry_field);
 
     cpuu->env.regs[15] = entry & (~1);
@@ -399,7 +407,7 @@ static void set_entry_point(QDict *conf, MIPSCPU *cpuu)
 #ifdef TARGET_ARM
 static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
 {
-    const char *cpu_model = ms->cpu_model;
+    const char *cpu_model = ms->cpu_type;
     ObjectClass *cpu_oc;
     Object *cpuobj;
     ARMCPU *cpuu;
@@ -467,7 +475,7 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
 #elif TARGET_MIPS
 static MIPSCPU *create_cpu(MachineState * ms, QDict *conf)
 {
-    const char *cpu_model = ms->cpu_model;
+    const char *cpu_model = ms->cpu_type;
     MIPSCPU *cpuu;
     CPUState *cpu;
 
@@ -526,13 +534,13 @@ static void board_init(MachineState * ms)
     {
         peripherals = qdict_new();
         QListEntry * entry;
-        QList * memories = qobject_to_qlist(qdict_get(conf, "memory_mapping"));
+        QList * memories = qobject_to(QList, qdict_get(conf, "memory_mapping"));
         g_assert(memories);
 
         QLIST_FOREACH_ENTRY(memories, entry)
         {
             g_assert(qobject_type(entry->value) == QTYPE_QDICT);
-            QDict *mapping = qobject_to_qdict(entry->value);
+            QDict *mapping = qobject_to(QDict, entry->value);
 
             if((qdict_haskey(mapping, "qemu_name") &&
                 qobject_type(qdict_get(mapping, "qemu_name")) == QTYPE_QSTRING))
