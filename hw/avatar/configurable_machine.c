@@ -33,6 +33,7 @@
 #ifdef TARGET_ARM
 #include "target/arm/cpu.h"
 #include "hw/arm/arm.h"
+#include "hw/arm/armv7m.h"
 #include "hw/avatar/arm_helper.h"
 #endif
 
@@ -435,9 +436,9 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
                 g_assert(num_irq);
             } 
 
-            dstate = qdev_create(NULL, "armv7m");
+            dstate = qdev_create(NULL, TYPE_ARMV7M);
             qdev_prop_set_uint32(dstate, "num-irq", num_irq);
-            qdev_prop_set_string(dstate, "cpu-type", cpu_model);
+            qdev_prop_set_string(dstate, "cpu-type", ARM_CPU_TYPE_NAME("cortex-m3"));
             object_property_set_link(OBJECT(dstate), OBJECT(get_system_memory()),
                     "memory", &error_abort);
             qdev_init_nofail(dstate);
