@@ -2117,7 +2117,7 @@ int vm_stop(RunState state)
         return 0;
     }
 
-    return do_vm_stop(state, true);
+    return do_vm_stop(state, false);
 }
 
 /**
@@ -2140,13 +2140,13 @@ int vm_prepare_start(void)
      * the STOP event.
      */
     if (runstate_is_running()) {
-        qapi_event_send_stop();
-        qapi_event_send_resume();
+        //qapi_event_send_stop();
+        //qapi_event_send_resume();
         return -1;
     }
 
     /* We are sending this now, but the CPUs will be resumed shortly later */
-    qapi_event_send_resume();
+    //qapi_event_send_resume();
 
     replay_enable_events();
     cpu_enable_ticks();
