@@ -437,7 +437,7 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
 
             dstate = qdev_create(NULL, "armv7m");
             qdev_prop_set_uint32(dstate, "num-irq", num_irq);
-            qdev_prop_set_string(dstate, "cpu-model", cpu_model);
+            qdev_prop_set_string(dstate, "cpu-type", cpu_model);
             object_property_set_link(OBJECT(dstate), OBJECT(get_system_memory()),
                     "memory", &error_abort);
             qdev_init_nofail(dstate);
