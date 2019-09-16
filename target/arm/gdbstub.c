@@ -58,6 +58,8 @@ int arm_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n)
         }
         return gdb_get_reg32(mem_buf, 0);
     case 25:
+        if (arm_feature(env, ARM_FEATURE_M))
+            return gdb_get_reg32(mem_buf, xpsr_read(env));
         /* CPSR */
         return gdb_get_reg32(mem_buf, cpsr_read(env));
     }
@@ -99,8 +101,13 @@ int arm_cpu_gdb_write_register(CPUState *cs, uint8_t *mem_buf, int n)
         }
         return 4;
     case 25:
-        /* CPSR */
+        if (arm_feature(env, ARM_FEATURE_M)) {
+            xpsr_write(env, tmp, 0xffffffff);
+        }
+        else
+        { /* CPSR */
         cpsr_write(env, tmp, 0xffffffff, CPSRWriteByGDBStub);
+        }
         return 4;
     }
     /* Unknown register.  */

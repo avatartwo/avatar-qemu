@@ -274,6 +274,8 @@ const QEMULogItem qemu_log_items[] = {
     { CPU_LOG_TB_NOCHAIN, "nochain",
       "do not chain compiled TBs so that \"exec\" and \"cpu\" show\n"
       "complete traces" },
+    { LOG_AVATAR, "avatar",
+      "Show avatar related events\n" },
     { 0, NULL, NULL },
 };
 
