@@ -18,6 +18,7 @@
 #include "sysemu/kvm.h"
 #include "fpu/softfloat.h"
 #include "qemu/range.h"
+#include "hw/avatar/interrupts.h"
 
 #define ARM_CPU_FREQ 1000000000 /* FIXME: 1 GHz, should be configurable */
 
@@ -7374,6 +7375,8 @@ static void do_v7m_exception_exit(ARMCPU *cpu)
         return;
     }
 
+    avatar_armv7m_exception_exit(env->v7m.exception, env->regs[15]);
+
     if (ufault) {
         /* Bad exception return: instead of popping the exception
          * stack, directly take a usage fault on the current stack.
@@ -8466,7 +8469,6 @@ static void arm_cpu_do_interrupt_aarch32(CPUState *cs)
     if ((env->uncached_cpsr & CPSR_M) == ARM_CPU_MODE_MON) {
         env->cp15.scr_el3 &= ~SCR_NS;
     }
-
     take_aarch32_exception(env, new_mode, mask, offset, addr);
 }
 
