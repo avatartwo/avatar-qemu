@@ -34,7 +34,6 @@
 #include "arm_ldst.h"
 #include "exec/cpu_ldst.h"
 #endif
-#include "hw/avatar/interrupts.h"
 
 #define ARM_CPU_FREQ 1000000000 /* FIXME: 1 GHz, should be configurable */
 
@@ -9436,7 +9435,6 @@ static void arm_cpu_do_interrupt_aarch32_hyp(CPUState *cs)
     addr += env->cp15.hvbar;
 
     take_aarch32_exception(env, ARM_CPU_MODE_HYP, mask, 0, addr);
-    avatar_armv7m_exception_exit(env->v7m.exception, env->regs[15]);
 }
 
 static void arm_cpu_do_interrupt_aarch32(CPUState *cs)
