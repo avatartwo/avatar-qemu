@@ -1228,6 +1228,7 @@ struct MIPSCPUClass {
     /* Used for the jazz board to modify mips_cpu_do_transaction_failed. */
     bool no_data_aborts;
 };
+#define cpu_signal_handler cpu_mips_signal_handler
 
 void cpu_wrdsp(uint32_t rs, uint32_t mask_num, CPUMIPSState *env);
 uint32_t cpu_rddsp(uint32_t mask_num, CPUMIPSState *env);
