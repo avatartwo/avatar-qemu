@@ -922,6 +922,18 @@ const mips_def_t mips_defs[] =
 };
 const int mips_defs_number = ARRAY_SIZE(mips_defs);
 
+static const mips_def_t *cpu_mips_find_by_name (const char *name)
+{
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(mips_defs); i++) {
+        if (strcasecmp(name, mips_defs[i].name) == 0) {
+            return &mips_defs[i];
+        }
+    }
+    return NULL;
+}
+
 void mips_cpu_list(void)
 {
     int i;
