@@ -1237,6 +1237,8 @@ struct MIPSCPUClass {
 
 void mips_cpu_list(void);
 
+MIPSCPU *cpu_mips_init(const char *cpu_model);
+#define cpu_signal_handler cpu_mips_signal_handler
 #define cpu_list mips_cpu_list
 
 void cpu_wrdsp(uint32_t rs, uint32_t mask_num, CPUMIPSState *env);
