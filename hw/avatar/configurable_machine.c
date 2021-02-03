@@ -1,8 +1,10 @@
 /*
  * Avatar2 configurable machine for dynamic creation of emulated boards
  *
- * Copyright (C) 2017 Eurecom
- * Written by Dario Nisi, Marius Muench & Jonas Zaddach
+ * Copyright (C) 2017-2021 Eurecom
+ * Written by Dario Nisi, Marius Muench, Paul Olivier & Jonas Zaddach
+ *
+ * Updates for MIPS, i386, and x86_64 written by Andrew Fasano for PANDA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,17 +33,30 @@
 #include "hw/qdev-properties.h"
 
 //plattform specific imports
-#ifdef TARGET_ARM
+#if defined(TARGET_ARM)
 #include "target/arm/cpu.h"
 #include "hw/arm/armv7m.h"
 #include "hw/avatar/arm_helper.h"
-#endif
+typedef ARMCPU THISCPU;
 
-#ifdef TARGET_MIPS
+#elif defined(TARGET_I386) || defined(TARGET_X86_64)
+#include "hw/i386/pc.h"
+#include "target/i386/cpu.h"
+typedef  X86CPU THISCPU;
+
+#elif defined(TARGET_MIPS)
 #include "hw/mips/mips.h"
 #include "hw/mips/cpudevs.h"
 #include "target/mips/cpu.h"
+typedef  MIPSCPU THISCPU;
+
+#elif defined(TARGET_PPC)
+#include "hw/ppc/ppc.h"
+#include "target/ppc/cpu.h"
+typedef PowerPCCPU THISCPU;
 #endif
+
+
 
 //qapi imports
 #include "qapi/error.h"
@@ -399,13 +414,9 @@ static void init_peripheral(QDict *device)
 }
 
 
-#ifdef TARGET_ARM
-static void set_entry_point(QDict *conf, ARMCPU *cpuu)
-#elif TARGET_MIPS
-static void set_entry_point(QDict *conf, MIPSCPU *cpuu)
-#endif
+
+static void set_entry_point(QDict *conf, THISCPU *cpuu)
 {
-#ifdef TARGET_ARM
     const char *entry_field = "entry_address";
     uint32_t entry;
 
@@ -416,43 +427,60 @@ static void set_entry_point(QDict *conf, MIPSCPU *cpuu)
     QDICT_ASSERT_KEY_TYPE(conf, entry_field, QTYPE_QNUM);
     entry = qdict_get_int(conf, entry_field);
 
+#ifdef TARGET_ARM
     cpuu->env.regs[15] = entry & (~1);
     cpuu->env.thumb = (entry & 1) == 1 ? 1 : 0;
-#elif TARGET_MIPS
+#elif defined(TARGET_I386)
+    cpuu->env.eip = entry;
+
+#elif defined(TARGET_MIPS)
+    cpuu->env.active_tc.PC = entry;
+
+#elif defined(TARGET_PPC)
     //Not implemented yet
+    printf("Not yet implemented- can't start execution at 0x%x\n", entry);
 #endif
+
 
 }
 
-#ifdef TARGET_ARM
-static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
+static THISCPU *create_cpu(MachineState * ms, QDict *conf)
 {
-    const char *cpu_model = ms->cpu_type;
+    const char *cpu_type;
+    THISCPU *cpuu;
+    CPUState *env;
+
+#if defined(TARGET_ARM) || defined(TARGET_I386) || defined(TARGET_MIPS)
     ObjectClass *cpu_oc;
     Object *cpuobj;
-    ARMCPU *cpuu;
-    CPUState *env;
+#endif
+
+#ifdef TARGET_ARM
     DeviceState *dstate; //generic device if CPU can be initiliazed via qdev-API
     BusState* sysbus = sysbus_get_default();
     int num_irq = 64;
-    
-    
-    if (qdict_haskey(conf, "cpu_model"))
-    {
-        cpu_model = qdict_get_str(conf, "cpu_model");
-        g_assert(cpu_model);
+
+#elif defined(TARGET_I386)
+    //
+
+#elif defined(TARGET_MIPS)
+    Error *err = NULL;
+#endif
+
+
+    cpu_type = ms->cpu_type;
+
+    if (qdict_haskey(conf, "cpu_model")) {
+        cpu_type = qdict_get_str(conf, "cpu_model");
+        g_assert(cpu_type);
     }
 
-    if (!cpu_model) cpu_model = "arm926";
 
-    printf("Configurable: Adding processor %s\n", cpu_model);
-
+#ifdef TARGET_ARM
     //create armv7m cpus together with nvic
-    if (!strcmp(cpu_model, "cortex-m3"))
-    {
+    if (!strcmp(cpu_type, "cortex-m3")) {
 
-        if (qdict_haskey(conf, "num_irq"))
-        {
+        if (qdict_haskey(conf, "num_irq")) {
             num_irq = qdict_get_int(conf, "num_irq");
             g_assert(num_irq);
         } 
@@ -461,15 +489,13 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
         qdev_prop_set_uint32(dstate, "num-irq", num_irq);
         qdev_prop_set_string(dstate, "cpu-type", ARM_CPU_TYPE_NAME("cortex-m3"));
         object_property_set_link(OBJECT(dstate), "memory", 
-            OBJECT(get_system_memory()), &error_abort);
+        OBJECT(get_system_memory()), &error_abort);
         qdev_realize_and_unref(dstate, sysbus, NULL);
 
         cpuu = ARM_CPU(first_cpu);
 
-    }
-    else
-    {
-        cpu_oc = cpu_class_by_name(TYPE_ARM_CPU, cpu_model);
+    } else {
+        cpu_oc = cpu_class_by_name(TYPE_ARM_CPU, cpu_type);
         if (!cpu_oc) {
             fprintf(stderr, "Unable to find CPU definition\n");
             exit(1);
@@ -480,60 +506,75 @@ static ARMCPU *create_cpu(MachineState * ms, QDict *conf)
         object_property_set_bool(cpuobj, "realized", true, &error_fatal);
         cpuu = ARM_CPU(cpuobj);
     }
-    env = (CPUState *) &(cpuu->env);
-    if (!env)
-    {
-            fprintf(stderr, "Unable to find CPU definition\n");
-            exit(1);
+
+#elif defined(TARGET_I386)
+    cpu_oc = cpu_class_by_name(TYPE_X86_CPU, cpu_type);
+    if (!cpu_oc) {
+        fprintf(stderr, "Unable to find CPU definition\n");
+        exit(1);
     }
 
+    cpuobj = object_new(object_class_get_name(cpu_oc));
+    cpuu = X86_CPU(cpuobj);
+
+    if (cpuu->apic_state) {
+            device_legacy_reset(cpuu->apic_state);
+    }
+
+#elif defined(TARGET_MIPS)
+    cpu_oc = cpu_class_by_name(TYPE_MIPS_CPU, cpu_type);
+    if (!cpu_oc) {
+        fprintf(stderr, "Unable to find CPU definition\n");
+        exit(1);
+    }
+
+    cpuobj = object_new(object_class_get_name(cpu_oc));
+    cpuu = MIPS_CPU(cpuobj);
+
+    if (!qdev_realize(DEVICE(cpuu), NULL, &err)) {
+        error_report_err(err);
+        object_unref(OBJECT(cpuu));
+        exit(EXIT_FAILURE);
+    }
+
+#elif defined(TARGET_PPC)
+    cpuu = cpu_ppc_init(cpu_type);
+#endif
+
+
+    env = (CPUState *) &(cpuu->env);
+    if (!env) {
+        fprintf(stderr, "Unable to find CPU definition\n");
+        exit(1);
+    }
+
+
+#if defined(TARGET_ARM)
     avatar_add_banked_registers(cpuu);
     set_feature(&cpuu->env, ARM_FEATURE_CONFIGURABLE);
-    return cpuu;
-}
 
+#elif defined(TARGET_I386)
+    // Ensures CS register is set correctly on x86/x86_64 CPU reset. See target/i386/cpu.c:3063
+    int mode =
+#if defined(TARGET_X86_64)
+          64;
+#else
+          32;
+#endif  /* TARGET_X86_64 */
+    set_x86_configurable_machine(mode); // This sets the CPU to be in 32 or 64 bit mode
 
-#elif TARGET_MIPS
-static MIPSCPU *create_cpu(MachineState * ms, QDict *conf)
-{
-    const char *cpu_model = ms->cpu_type;
-    MIPSCPU *cpuu;
-    CPUState *cpu;
-
-    if (qdict_haskey(conf, "cpu_model"))
-    {
-        cpu_model = qdict_get_str(conf, "cpu_model");
-        g_assert(cpu_model);
-    }
-
-    if (!cpu_model) cpu_model = "mips32r6-generic";
-
-    printf("Configurable: Adding processor %s\n", cpu_model);
-
-    cpuu = cpu_mips_init(cpu_model);
-    if (cpuu == NULL) {
-        fprintf(stderr, "Unable to find CPU definition\n");
-        exit(1);
-    }
-
-    cpu = (CPUState *) &(cpuu->env);
-    if (!cpu) {
-        fprintf(stderr, "Unable to find CPU definition\n");
-        exit(1);
-    }
-
-    return cpuu;
-}
+#elif defined(TARGET_MIPS)
+    //
 #endif
+
+    assert(cpuu != NULL);
+    return cpuu;
+}
 
 
 static void board_init(MachineState * ms)
 {
-#ifdef TARGET_ARM
-    ARMCPU *cpuu;
-#elif TARGET_MIPS
-    MIPSCPU *cpuu;
-#endif
+    THISCPU *cpuu;
 
     const char *kernel_filename = ms->kernel_filename;
     QDict * conf = NULL;
@@ -583,6 +624,17 @@ static void configurable_machine_class_init(ObjectClass *oc, void *data)
     mc->desc = "Machine that can be configured to be whatever you want";
     mc->init = board_init;
     mc->block_default_type = IF_SCSI;
+
+#ifdef TARGET_ARM
+    mc->default_cpu_type = "arm926";
+#elif defined(TARGET_I386)
+    mc->default_cpu_type = "qemu32";
+#elif defined(TARGET_MIPS)
+    mc->default_cpu_type = "24Kf";
+    //mc->default_cpu_type = "mips32r6-generic";
+#elif defined(TARGET_PPC)
+    mc->default_cpu_type = "e500v2_v30";
+#endif
 }
 
 static const TypeInfo configurable_machine_type = {
