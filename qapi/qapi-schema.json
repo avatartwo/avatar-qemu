@@ -80,4 +80,4 @@
 { 'include': 'virtio.json' }
 { 'include': 'cryptodev.json' }
 { 'include': 'cxl.json' }
-{ 'include': 'avatar.json' }
+{ 'include': 'avatar-target.json' }
