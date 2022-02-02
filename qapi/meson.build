@@ -65,6 +65,7 @@ if have_system
     'pci',
     'rocker',
     'tpm',
+    'avatar-target',
   ]
 endif
 if have_system or have_tools
