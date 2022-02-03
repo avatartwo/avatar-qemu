@@ -43,6 +43,22 @@ qemu_icondir = get_option('datadir') / 'icons'
 genh = []
 qapi_trace_events = []
 
+target_dirs = config_host['TARGET_DIRS'].split()
+have_linux_user = false
+have_bsd_user = false
+have_system = false
+foreach target : target_dirs
+  have_linux_user = have_linux_user or target.endswith('linux-user')
+  have_bsd_user = have_bsd_user or target.endswith('bsd-user')
+  have_system = have_system or target.endswith('-softmmu')
+endforeach
+have_user = have_linux_user or have_bsd_user
+have_tools = 'CONFIG_TOOLS' in config_host
+have_block = have_system or have_tools
+have_avatar = 'CONFIG_AVATAR' in config_host
+
+python = import('python').find_installation()
+
 bsd_oses = ['gnu/kfreebsd', 'freebsd', 'netbsd', 'openbsd', 'dragonfly', 'darwin']
 supported_oses = ['windows', 'freebsd', 'netbsd', 'openbsd', 'darwin', 'sunos', 'linux']
 supported_cpus = ['ppc', 'ppc64', 's390x', 'riscv32', 'riscv64', 'x86', 'x86_64',
@@ -4015,8 +4031,10 @@ foreach target : target_dirs
       exe_name += '-unsigned'
     endif
 
-    # To link configurable machine with mqueue.h
-    link_args += ['-lrt']
+    if have_avatar
+      # To link the configurable machine with mqueue.h
+      link_args += ['-lrt']
+    endif
 
     emulator = executable(exe_name, exe['sources'],
                install: true,
@@ -4284,6 +4302,7 @@ summary_info += {'vhost-user-crypto support': have_vhost_user_crypto}
 summary_info += {'vhost-user-blk server support': have_vhost_user_blk_server}
 summary_info += {'vhost-vdpa support': have_vhost_vdpa}
 summary_info += {'build guest agent': have_ga}
+summary_info += {'avatar2 support': config_host.has_key('CONFIG_AVATAR')}
 summary(summary_info, bool_yn: true, section: 'Configurable features')
 
 # Compilation information

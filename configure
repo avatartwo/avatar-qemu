@@ -195,6 +195,8 @@ EXTRA_LDFLAGS=""
 # is impossible without a --enable-foo that exits if a feature is not found.
 default_feature=""
 
+avatar="yes"
+
 for opt do
   optarg=$(expr "x$opt" : 'x[^=]*=\(.*\)')
   case "$opt" in
@@ -756,6 +758,10 @@ for opt do
   --container-engine=*) container_engine="$optarg"
   ;;
   --gdb=*) gdb_bin="$optarg"
+  ;;
+  --enable-avatar) avatar=yes
+  ;;
+  --disable-avatar) avatar=no
   ;;
   # everything else has the same name in configure and meson
   --*) meson_option_parse "$opt" "$optarg"
@@ -1686,6 +1692,10 @@ done
 
 if test "$tcg" = "enabled"; then
     echo "TCG_TESTS_TARGETS=$tcg_tests_targets" >> $config_host_mak
+fi
+
+if test "$avatar" = "yes"; then
+    echo "CONFIG_AVATAR=y" >> $config_host_mak
 fi
 
 if test "$skip_meson" = no; then
