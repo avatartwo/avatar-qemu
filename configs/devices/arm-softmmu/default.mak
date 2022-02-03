@@ -4,7 +4,6 @@
 # CONFIG_TEST_DEVICES=n
 
 CONFIG_ARM_VIRT=y
-CONFIG_AVATAR=y
 
 # These are selected by default when TCG is enabled, uncomment them to
 # keep out of the build.
@@ -45,3 +44,4 @@ CONFIG_AVATAR=y
 # CONFIG_FSL_IMX7=n
 # CONFIG_FSL_IMX6UL=n
 # CONFIG_ALLWINNER_H3=n
+# CONFIG_AVATAR=n

@@ -889,6 +889,7 @@ cat << EOF
   linux-user      all linux usermode emulation targets
   bsd-user        all BSD usermode emulation targets
   pie             Position Independent Executables
+  avatar          configurable machine and avatar2 support
 
 NOTE: The object files are built at the place where configure is launched
 EOF

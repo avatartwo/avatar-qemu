@@ -44,6 +44,7 @@ source virtio/Kconfig
 source vfio/Kconfig
 source xen/Kconfig
 source watchdog/Kconfig
+source avatar/Kconfig
 
 # arch Kconfig
 source arm/Kconfig
@@ -67,7 +68,6 @@ source sparc/Kconfig
 source sparc64/Kconfig
 source tricore/Kconfig
 source xtensa/Kconfig
-source avatar/Kconfig
 
 # Symbols used by multiple targets
 config TEST_DEVICES

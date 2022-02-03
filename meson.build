@@ -564,6 +564,10 @@ have_tpm = get_option('tpm') \
   .require(targetos != 'windows', error_message: 'TPM emulation only available on POSIX systems') \
   .allowed()
 
+have_avatar = get_option('avatar') \
+  .require(targetos == 'linux', error_message: 'avatar configurable machine is supported only on Linux') \
+  .allowed()
+
 # vhost
 have_vhost_user = get_option('vhost_user') \
   .disable_auto_if(targetos != 'linux') \
@@ -2182,6 +2186,7 @@ if get_option('tcg').allowed()
   config_host_data.set('CONFIG_TCG_INTERPRETER', tcg_arch == 'tci')
 endif
 config_host_data.set('CONFIG_TPM', have_tpm)
+config_host_data.set('CONFIG_AVATAR', have_avatar)
 config_host_data.set('CONFIG_TSAN', get_option('tsan'))
 config_host_data.set('CONFIG_USB_LIBUSB', libusb.found())
 config_host_data.set('CONFIG_VDE', vde.found())
@@ -2895,6 +2900,7 @@ have_ivshmem = config_host_data.get('CONFIG_EVENTFD')
 host_kconfig = \
   (get_option('fuzzing') ? ['CONFIG_FUZZ=y'] : []) + \
   (have_tpm ? ['CONFIG_TPM=y'] : []) + \
+  (have_avatar ? ['CONFIG_AVATAR=y'] : []) + \
   (pixman.found() ? ['CONFIG_PIXMAN=y'] : []) + \
   (spice.found() ? ['CONFIG_SPICE=y'] : []) + \
   (have_ivshmem ? ['CONFIG_IVSHMEM=y'] : []) + \
@@ -3892,8 +3898,10 @@ foreach target : target_dirs
       exe_name += '-unsigned'
     endif
 
-    # To link configurable machine with mqueue.h
-    link_args += ['-lrt']
+    if have_avatar
+      # To link the configurable machine with mqueue.h
+      link_args += ['-lrt']
+    endif
 
     emulator = executable(exe_name, exe['sources'],
                install: true,
@@ -4136,6 +4144,7 @@ summary_info += {'vhost-user-crypto support': have_vhost_user_crypto}
 summary_info += {'vhost-user-blk server support': have_vhost_user_blk_server}
 summary_info += {'vhost-vdpa support': have_vhost_vdpa}
 summary_info += {'build guest agent': have_ga}
+summary_info += {'avatar2 support': have_avatar}
 summary(summary_info, bool_yn: true, section: 'Configurable features')
 
 # Compilation information
