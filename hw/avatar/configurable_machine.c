@@ -33,8 +33,8 @@
 #include "hw/boards.h"
 #include "hw/qdev-properties.h"
 
-//plattform specific imports
-#if defined(TARGET_ARM)
+//platform specific imports
+#ifdef TARGET_ARM
 #include "target/arm/cpu.h"
 #include "hw/avatar/arm_helper.h"
 
@@ -58,9 +58,10 @@ typedef  MIPSCPU THISCPU;
 #include "hw/ppc/ppc.h"
 #include "target/ppc/cpu.h"
 typedef PowerPCCPU THISCPU;
+#elif defined(TARGET_AVR)
+#include "target/avr/cpu.h"
+typedef AVRCPU THISCPU;
 #endif
-
-
 
 //qapi imports
 #include "qapi/error.h"
@@ -71,6 +72,13 @@ typedef PowerPCCPU THISCPU;
 #include "qapi/qmp/qlist.h"
 
 
+#if defined(TARGET_ARM)
+void avatar_cm_set_entry_point(QDict *conf, ARMCPU *cpuu);
+#elif defined(TARGET_MIPS)
+void avatar_cm_set_entry_point(QDict *conf, MIPSCPU *cpuu);
+#elif defined(TARGET_AVR)
+void avatar_cm_set_entry_point(QDict *conf, AVRCPU *cpuu);
+#endif
 
 #define QDICT_ASSERT_KEY_TYPE(_dict, _key, _type) \
     g_assert(qdict_haskey(_dict, _key) && qobject_type(qdict_get(_dict, _key)) == _type)
@@ -276,7 +284,11 @@ static void init_memory_area(QDict *mapping, const char *kernel_filename)
 
     QDICT_ASSERT_KEY_TYPE(mapping, "name", QTYPE_QSTRING);
     QDICT_ASSERT_KEY_TYPE(mapping, "size", QTYPE_QNUM);
+#if defined(TARGET_ARM)
+    /* Include this assert on the ARM target.
+       Ensures 0xFFF are cleared. */
     g_assert((qdict_get_int(mapping, "size") & ((1 << 12) - 1)) == 0);
+#endif
 
     if(qdict_haskey(mapping, "is_rom")) {
         QDICT_ASSERT_KEY_TYPE(mapping, "is_rom", QTYPE_QBOOL);
@@ -429,10 +441,10 @@ static void init_peripheral(QDict *device)
 }
 
 
-
 static void set_entry_point(QDict *conf, THISCPU *cpuu)
 {
     const char *entry_field = "entry_address";
+#ifdef TARGET_ARM
     uint32_t entry;
 
 
@@ -446,6 +458,7 @@ static void set_entry_point(QDict *conf, THISCPU *cpuu)
     cpuu->env.regs[15] = entry & (~1);
     cpuu->env.thumb = (entry & 1) == 1 ? 1 : 0;
 
+
 #elif defined(TARGET_I386)
     cpuu->env.eip = entry;
 
@@ -455,9 +468,18 @@ static void set_entry_point(QDict *conf, THISCPU *cpuu)
 #elif defined(TARGET_PPC)
     //Not implemented yet
     printf("Not yet implemented- can't start execution at 0x%x\n", entry);
+
+#elif defined(TARGET_AVR)
+    uint32_t entry;
+
+    if(!qdict_haskey(conf, entry_field))
+        return;
+
+    QDICT_ASSERT_KEY_TYPE(conf, entry_field, QTYPE_QNUM);
+    entry = qdict_get_int(conf, entry_field);
+
+    cpuu->env.pc_w = entry >> 1;
 #endif
-
-
 }
 
 static THISCPU *create_cpu(MachineState * ms, QDict *conf)
@@ -619,7 +641,7 @@ static void board_init(MachineState * ms)
     }
 
     cpuu = create_cpu(ms, conf);
-    set_entry_point(conf, cpuu);
+    avatar_cm_set_entry_point(conf, cpuu);
 
     if (qdict_haskey(conf, "memory_mapping"))
     {

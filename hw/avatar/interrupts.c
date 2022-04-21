@@ -99,6 +99,7 @@ void qmp_avatar_armv7m_enable_irq(const char *irq_rx_queue_name,
 
 void qmp_avatar_armv7m_disable_irq(Error **errp)
 {
+    
     qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection disabled\n");
     armv7m_exception_handling_enabled = false;
     qemu_log_flush();
@@ -107,12 +108,16 @@ void qmp_avatar_armv7m_disable_irq(Error **errp)
 
 void qmp_avatar_armv7m_ignore_irq_return(int64_t num_irq, Error **errp)
 {
+#ifdef TARGET_ARM
     ignore_irq_return_map[num_irq/8] |= 1 << num_irq % 8;
+#endif
 }
 
 void qmp_avatar_armv7m_unignore_irq_return(int64_t num_irq, Error **errp)
 {
+#ifdef TARGET_ARM
     ignore_irq_return_map[num_irq/8] &= 0 << num_irq % 8;
+#endif
 }
 
 void qmp_avatar_armv7m_inject_irq(int64_t num_cpu,int64_t num_irq, Error **errp)
