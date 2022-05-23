@@ -5,6 +5,7 @@
  * Written by Dario Nisi, Marius Muench, Paul Olivier & Jonas Zaddach
  *
  * Updates for MIPS, i386, and x86_64 written by Andrew Fasano for PANDA
+ * Updates for AVR written by Antony Vennard
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,7 +23,7 @@
  *   Written by Paul Brook
  */
 
-//general imports
+/* general imports */
 #include "qemu/osdep.h"
 #include "qemu/error-report.h"
 #include "sysemu/sysemu.h"
@@ -33,7 +34,7 @@
 #include "hw/boards.h"
 #include "hw/qdev-properties.h"
 
-//platform specific imports
+/* platform specific imports */
 #ifdef TARGET_ARM
 #include "target/arm/cpu.h"
 #include "hw/avatar/arm_helper.h"
@@ -58,12 +59,13 @@ typedef  MIPSCPU THISCPU;
 #include "hw/ppc/ppc.h"
 #include "target/ppc/cpu.h"
 typedef PowerPCCPU THISCPU;
+
 #elif defined(TARGET_AVR)
 #include "target/avr/cpu.h"
 typedef AVRCPU THISCPU;
 #endif
 
-//qapi imports
+/* qapi imports */
 #include "qapi/error.h"
 #include "qapi/qmp/qjson.h"
 #include "qapi/qmp/qobject.h"
@@ -72,13 +74,7 @@ typedef AVRCPU THISCPU;
 #include "qapi/qmp/qlist.h"
 
 
-#if defined(TARGET_ARM)
-void avatar_cm_set_entry_point(QDict *conf, ARMCPU *cpuu);
-#elif defined(TARGET_MIPS)
-void avatar_cm_set_entry_point(QDict *conf, MIPSCPU *cpuu);
-#elif defined(TARGET_AVR)
-void avatar_cm_set_entry_point(QDict *conf, AVRCPU *cpuu);
-#endif
+void avatar_cm_set_entry_point(QDict *conf, THISCPU *cpuu);
 
 #define QDICT_ASSERT_KEY_TYPE(_dict, _key, _type) \
     g_assert(qdict_haskey(_dict, _key) && qobject_type(qdict_get(_dict, _key)) == _type)
@@ -485,9 +481,10 @@ static THISCPU *create_cpu(MachineState * ms, QDict *conf)
     const char *cpu_type;
     THISCPU *cpuu = NULL;
     CPUState *env = NULL;
-#if defined(TARGET_ARM)
+
+#if !defined(TARGET_AVR)
     Object *cpuobj = NULL;
-#endif
+#endif  /* !TARGET_AVR */
 
 #if defined(TARGET_ARM) || defined(TARGET_I386) || defined(TARGET_MIPS)
     ObjectClass *cpu_oc;
@@ -503,7 +500,7 @@ static THISCPU *create_cpu(MachineState * ms, QDict *conf)
 
 #elif defined(TARGET_MIPS)
     Error *err = NULL;
-#endif  /* TARGET_ARM */
+#endif  /* TARGET_ARM && ! TARGET_AARCH64 */
 
 
     cpu_type = ms->cpu_type;
@@ -687,6 +684,8 @@ static void configurable_machine_class_init(ObjectClass *oc, void *data)
     //mc->default_cpu_type = "mips32r6-generic";
 #elif defined(TARGET_PPC)
     mc->default_cpu_type = POWERPC_CPU_TYPE_NAME("e500v2_v30");
+#elif defined(TARGET_AVR)
+    mc->default_cpu_type = AVR_CPU_TYPE_NAME("avr5");
 #endif
 }
 

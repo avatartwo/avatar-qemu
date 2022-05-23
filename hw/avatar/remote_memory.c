@@ -14,32 +14,27 @@
 
 #if defined(TARGET_ARM)
 #include "target/arm/cpu.h"
-#elif defined(TARGET_PPC)
-    //
-#elif defined(TARGET_MIPS)
-    //
 #elif defined(TARGET_AVR)
 #include "target/avr/cpu.h"
-    //
 #endif
 
 
 #define TYPE_AVATAR_RMEMORY "avatar-rmemory"
 #define AVATAR_RMEMORY(obj) OBJECT_CHECK(AvatarRMemoryState, (obj), TYPE_AVATAR_RMEMORY)
 
-uint64_t get_current_pc(void){
+uint64_t get_current_pc(void)
+{
 #if defined(TARGET_ARM)
     ARMCPU *cpu = ARM_CPU(qemu_get_cpu(0));
     return cpu->env.regs[15]; /* PC register is register 15 */
-#elif defined(TARGET_PPC)
-    return 0; /*  implement me */
-#elif defined(TARGET_MIPS)
-    return 0; /*  implement me */
+
 #elif defined(TARGET_AVR)
     AVRCPU *cpu = AVR_CPU(qemu_get_cpu(0));
     return cpu->env.pc_w; /* PC register is register 35 */
+
+#else
+    return 0; /*  implement me */
 #endif
-    return 0;
 }
 
 
