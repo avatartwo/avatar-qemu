@@ -14,7 +14,7 @@
 
 #if defined(TARGET_ARM)
 #include "target/arm/cpu.h"
-#elif TARGET_MIPS
+#elif defined(TARGET_PPC)
     //
 #elif defined(TARGET_MIPS)
     //
@@ -31,6 +31,8 @@ uint64_t get_current_pc(void){
 #if defined(TARGET_ARM)
     ARMCPU *cpu = ARM_CPU(qemu_get_cpu(0));
     return cpu->env.regs[15]; /* PC register is register 15 */
+#elif defined(TARGET_PPC)
+    return 0; /*  implement me */
 #elif defined(TARGET_MIPS)
     return 0; /*  implement me */
 #elif defined(TARGET_AVR)

@@ -441,10 +441,9 @@ static void init_peripheral(QDict *device)
 }
 
 
-static void set_entry_point(QDict *conf, THISCPU *cpuu)
+void avatar_cm_set_entry_point(QDict *conf, THISCPU *cpuu)
 {
     const char *entry_field = "entry_address";
-#ifdef TARGET_ARM
     uint32_t entry;
 
 
@@ -470,7 +469,6 @@ static void set_entry_point(QDict *conf, THISCPU *cpuu)
     printf("Not yet implemented- can't start execution at 0x%x\n", entry);
 
 #elif defined(TARGET_AVR)
-    uint32_t entry;
 
     if(!qdict_haskey(conf, entry_field))
         return;
@@ -485,9 +483,11 @@ static void set_entry_point(QDict *conf, THISCPU *cpuu)
 static THISCPU *create_cpu(MachineState * ms, QDict *conf)
 {
     const char *cpu_type;
-    THISCPU *cpuu;
-    CPUState *env;
-    Object *cpuobj;
+    THISCPU *cpuu = NULL;
+    CPUState *env = NULL;
+#if defined(TARGET_ARM)
+    Object *cpuobj = NULL;
+#endif
 
 #if defined(TARGET_ARM) || defined(TARGET_I386) || defined(TARGET_MIPS)
     ObjectClass *cpu_oc;
