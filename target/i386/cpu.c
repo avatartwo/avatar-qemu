@@ -5871,7 +5871,7 @@ static void x86_cpu_reset(DeviceState *dev)
       // of a unicorn-style execution
 
       // But do set hflags so we're in 32-bit mode (else we end up in 16-bit)
-      env->hflags |= HF_CS32_MASK;
+      env->hflags |= HF_CS32_MASK | HF_SS32_MASK;
       return;
     }else if (x86_configurable_machine_mode == 64) {
       // Set hflags so we're in 64-bit mode (else we end up in 16-bit)
