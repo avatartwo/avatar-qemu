@@ -2767,16 +2767,3 @@ static void armv7m_nvic_register_types(void)
 }
 
 type_init(armv7m_nvic_register_types)
-
-#ifdef CONFIG_AVATAR
-bool armv7m_nvic_enable_all_irqs(void* opaque) {
-    NVICState *s = (NVICState *)opaque;
-
-    for (int i = 1; i < s->num_irq; ++i) {
-        VecInfo *vec = &s->vectors[i];
-        vec->enabled = 1;
-    }
-
-    return true;
-}
-#endif
