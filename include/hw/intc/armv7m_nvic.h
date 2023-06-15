@@ -206,10 +206,4 @@ static inline bool armv7m_nvic_can_take_pending_exception(NVICState *s)
 }
 #endif
 
-/* Avatar2 addition to enable interrupt injection
- */
-#ifdef CONFIG_AVATAR
-bool armv7m_nvic_enable_all_irqs(void *opaque);
-#endif
-
 #endif
