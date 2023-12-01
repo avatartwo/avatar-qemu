@@ -2335,6 +2335,7 @@ static inline bool armv7m_nvic_can_take_pending_exception(void *opaque)
     return true;
 }
 #endif
+
 /**
  * armv7m_nvic_set_pending: mark the specified exception as pending
  * @opaque: the NVIC
