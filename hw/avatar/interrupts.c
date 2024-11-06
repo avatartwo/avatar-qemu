@@ -44,7 +44,6 @@ bool avatar_armv7m_nvic_forward_write(uint32_t offset, uint32_t value, unsigned 
     RemoteMemoryResp resp;
 
     qemu_log_mask(LOG_AVATAR, "armv7m nvic write at offset 0x%x\n", offset);
-    qemu_log_flush();
     if(!armv7m_exception_handling_enabled){
         return false;
     }
@@ -92,7 +91,6 @@ void qmp_avatar_armv7m_enable_irq(const char *irq_rx_queue_name,
 
     armv7m_exception_handling_enabled = true;
     qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection enabled\n");
-    qemu_log_flush();
 }
 
 
@@ -100,7 +98,6 @@ void qmp_avatar_armv7m_disable_irq(Error **errp)
 {
     qemu_log_mask(LOG_AVATAR, "armv7m interrupt injection disabled\n");
     armv7m_exception_handling_enabled = false;
-    qemu_log_flush();
 }
 
 
