@@ -84,35 +84,42 @@ void avatar_cm_set_entry_point(QDict *conf, THISCPU *cpuu);
 
 static QDict * load_configuration(const char * filename)
 {
-    int file = open(filename, O_RDONLY);
-    off_t filesize = lseek(file, 0, SEEK_END);
+    FILE* fp;
+    long filesize;
     char * filedata = NULL;
-    ssize_t err;
+    size_t err;
     Error * qerr = NULL;
     QObject * obj;
     QDict * obj_dict;
 
-    lseek(file, 0, SEEK_SET);
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+        error_printf("Error: could not open configuration file: %s\n", filename);
+        exit(1);
+    }
+
+    fseek(fp, 0, SEEK_END);
+    filesize = ftell(fp);
+    rewind(fp);
 
     filedata = g_malloc(filesize + 1);
+    if (filedata == NULL) {
+        error_printf("Fail to allocate buffer memory for configuration file\n");
+        g_free(filedata);
+        fclose(fp);
+        exit(1);
+    }
     memset(filedata, 0, filesize + 1);
 
-    if (!filedata)
-    {
-        error_printf("%ld\n", filesize);
-        error_printf("Out of memory\n");
-        exit(1);
-    }
-
-    err = read(file, filedata, filesize);
-
-    if (err != filesize)
-    {
+    err = fread(filedata, 1, filesize, fp);
+    if (err != filesize) {
         error_printf("Reading configuration file failed\n");
+        g_free(filedata);
+        fclose(fp);
         exit(1);
     }
 
-    close(file);
+    fclose(fp);
 
     obj = qobject_from_json(filedata, &qerr);
     if (!obj || qobject_type(obj) != QTYPE_QDICT)
@@ -124,7 +131,7 @@ static QDict * load_configuration(const char * filename)
     obj_dict = qobject_to(QDict, obj);
     if (!obj_dict) {
         qobject_unref(obj);
-        error_printf("Invalid JSON object given");
+        error_printf("Invalid JSON object given\n");
         exit(1);
     }
 
