@@ -1,7 +1,6 @@
 #include "qemu/osdep.h"
 #include "qemu/log.h"
 #include "qemu/error-report.h"
-#include "qemu-common.h"
 #include "qapi/qapi-commands-avatar-target.h"
 #include "qapi/error.h"
 
