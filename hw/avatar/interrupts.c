@@ -7,6 +7,7 @@
 #include "hw/sysbus.h"
 #include "sysemu/sysemu.h"
 
+#include "hw/intc/armv7m_nvic.h"
 #include "target/arm/cpu.h"
 
 #include "hw/avatar/interrupts.h"
