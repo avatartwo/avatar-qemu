@@ -11,6 +11,15 @@
 # Enables custom avatar interrupt handling for armv7m guests
 #
 # avatar-qemu only
+#
+# @irq-rx-queue-name: Name
+#
+# @irq-tx-queue-name: Name
+#
+# @rmem-rx-queue-name: Name
+#
+# @rmem-tx-queue-name: Name
+#
 ##
 { 'command': 'avatar-armv7m-enable-irq',
   'data': {
@@ -37,6 +46,11 @@
 # Inject interrupt to armv7m core (requires arv7m interrupt handling enabled)
 #
 # avatar-qemu only
+#
+# @num-cpu: CPU number
+#
+# @num-irq: IRQ number
+#
 ##
 { 'command': 'avatar-armv7m-inject-irq',
   'data': {'num-cpu': 'int', 'num-irq': 'int' },
@@ -49,6 +63,9 @@
 # Advices QEMU to not communicate with avatar on interrupt returns
 #
 # avatar-qemu only
+#
+# @num-irq: IRQ number
+#
 ##
 { 'command': 'avatar-armv7m-ignore-irq-return',
   'data': {'num-irq': 'int' },
@@ -62,6 +79,9 @@
 # Advices QEMU to communicate with avatar on interrupt returns
 #
 # avatar-qemu only
+#
+# @num-irq: IRQ number
+#
 ##
 { 'command': 'avatar-armv7m-unignore-irq-return',
   'data': {'num-irq': 'int' },
@@ -74,6 +94,11 @@
 # Sets the NVIC base address to a user controlled location
 #
 # avatar-qemu only
+#
+# @num-cpu: CPU number
+#
+# @base: Base
+#
 ##
 { 'command': 'avatar-armv7m-set-vector-table-base',
   'data': {'num-cpu': 'int', 'base': 'int' },
