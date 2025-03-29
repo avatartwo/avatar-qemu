@@ -19,6 +19,7 @@
 #include "exec/address-spaces.h"
 #include "exec/gdbstub.h"
 
+#include "cpu.h"
 #include "internals.h"
 
 #include "hw/avatar/arm_helper.h"
